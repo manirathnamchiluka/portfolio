@@ -1,38 +1,79 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --color-neon-cyan: #0891B2;
-  --color-neon-blue: #2563EB;
+  --color-neon-cyan: #0284C7;
+  --color-neon-blue: #4F46E5;
+  --color-primary: var(--accent-cyan);
+  --color-background: var(--bg-main);
+  --color-foreground: var(--text-main);
 }
 
 @layer base {
   :root {
     --bg-main: #FFFFFF;
-    --text-main: #334155;
+    --bg-secondary: #F8FAFC;
+    --text-main: #1E293B;
+    --text-muted: #64748B;
     --heading-main: #0F172A;
-    --card-bg: rgba(255, 255, 255, 0.7);
-    --card-border: rgba(0, 0, 0, 0.1);
-    --card-shadow: rgba(0, 0, 0, 0.3);
-    --button-outline-bg: transparent;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: #E2E8F0;
+    --card-shadow: 0 10px 30px -5px rgba(15, 23, 42, 0.06), 0 4px 6px -2px rgba(15, 23, 42, 0.03);
+    --card-hover-border: #0284C7;
+    --card-hover-shadow: 0 20px 40px -10px rgba(2, 132, 199, 0.15);
+    --button-outline-bg: #FFFFFF;
     --button-outline-text: #0F172A;
-    --grid-color: rgba(8, 145, 178, 0.05);
+    --grid-color: rgba(2, 132, 199, 0.04);
+    --accent-cyan: #0284C7;
+    --accent-cyan-hover: #0369A1;
+    --accent-cyan-light: rgba(2, 132, 199, 0.08);
+    --accent-blue: #4F46E5;
+    --nav-bg: rgba(255, 255, 255, 0.85);
+    --nav-border: rgba(226, 232, 240, 0.8);
+    --badge-bg: #F1F5F9;
+    --badge-text: #334155;
+    --badge-border: #E2E8F0;
+    --footer-border: #E2E8F0;
+  }
+
+  .dark {
+    --bg-main: #030712;
+    --bg-secondary: #0B0F19;
+    --text-main: #E2E8F0;
+    --text-muted: #94A3B8;
+    --heading-main: #F8FAFC;
+    --card-bg: rgba(15, 23, 42, 0.7);
+    --card-border: rgba(56, 189, 248, 0.18);
+    --card-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.7);
+    --card-hover-border: #22D3EE;
+    --card-hover-shadow: 0 20px 40px -10px rgba(34, 211, 238, 0.25);
+    --button-outline-bg: rgba(15, 23, 42, 0.6);
+    --button-outline-text: #F8FAFC;
+    --grid-color: rgba(34, 211, 238, 0.035);
+    --accent-cyan: #22D3EE;
+    --accent-cyan-hover: #06B6D4;
+    --accent-cyan-light: rgba(34, 211, 238, 0.12);
+    --accent-blue: #818CF8;
+    --nav-bg: rgba(3, 7, 18, 0.85);
+    --nav-border: rgba(255, 255, 255, 0.08);
+    --badge-bg: rgba(30, 41, 59, 0.6);
+    --badge-text: #CBD5E1;
+    --badge-border: rgba(255, 255, 255, 0.1);
+    --footer-border: rgba(255, 255, 255, 0.08);
   }
 
   body {
-    @apply font-sans selection:bg-neon-cyan/20 scroll-smooth antialiased overflow-x-hidden;
+    @apply font-sans scroll-smooth antialiased overflow-x-hidden;
     background-color: var(--bg-main);
     color: var(--text-main);
-    background-image: 
-      radial-gradient(circle at 50% 50%, rgba(37, 99, 235, 0.02) 0%, transparent 80%),
-      linear-gradient(var(--grid-color) 1px, transparent 1px),
-      linear-gradient(90deg, var(--grid-color) 1px, transparent 1px);
-    background-size: 100% 100%, 50px 50px, 50px 50px;
+    transition: background-color 0.35s ease, color 0.35s ease;
   }
-  
-  h1, h2, h3, h4 {
+
+  h1, h2, h3, h4, h5, h6 {
     @apply tracking-tight font-sans;
     color: var(--heading-main);
   }
@@ -41,72 +82,123 @@
 .cyber-card {
   background-color: var(--card-bg);
   border: 1px solid var(--card-border);
-  @apply backdrop-blur-[2px] rounded-2xl transition-all duration-500 ease-out;
-  box-shadow: 
-    0 8px 32px 0 var(--card-shadow),
-    inset 0 1px 1px rgba(255, 255, 255, 0.05);
+  box-shadow: var(--card-shadow);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  @apply rounded-2xl transition-all duration-300 ease-out;
 }
 
 .cyber-card:hover {
-  @apply bg-white/[0.04];
-  box-shadow: 
-    0 20px 40px rgba(8, 145, 178, 0.03),
-    inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  border-color: var(--card-hover-border);
+  box-shadow: var(--card-hover-shadow);
   transform: translateY(-2px);
 }
 
 .glass-pill {
-  background-color: var(--button-outline-bg);
-  border: 1px solid var(--card-border);
-  color: var(--text-main);
-  @apply backdrop-blur-[1.5px] rounded-full px-4 py-1.5 shadow-sm transition-all hover:bg-white/10;
+  background-color: var(--badge-bg);
+  border: 1px solid var(--badge-border);
+  color: var(--badge-text);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  @apply rounded-full px-4 py-1.5 transition-all font-mono;
 }
 
 .cyber-button-primary {
-  @apply bg-neon-cyan/5 text-neon-cyan border border-neon-cyan/20 px-6 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest hover:bg-neon-cyan/90 hover:text-white hover:border-neon-cyan hover:shadow-[0_10px_25px_rgba(8,145,178,0.15)] transition-all duration-300 font-bold flex items-center justify-center gap-2 backdrop-blur-[1.5px];
+  background-color: var(--accent-cyan);
+  color: #FFFFFF;
+  @apply px-6 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-sm;
+}
+
+.cyber-button-primary:hover {
+  background-color: var(--accent-cyan-hover);
+  box-shadow: 0 10px 25px -5px rgba(2, 132, 199, 0.4);
+  transform: translateY(-1px);
+}
+
+.dark .cyber-button-primary {
+  background-color: #06B6D4;
+  color: #030712;
+}
+
+.dark .cyber-button-primary:hover {
+  background-color: #22D3EE;
+  box-shadow: 0 10px 25px -5px rgba(34, 211, 238, 0.45);
 }
 
 .cyber-button-outline {
   background-color: var(--button-outline-bg);
   color: var(--button-outline-text);
   border: 1px solid var(--card-border);
-  @apply px-6 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest hover:border-neon-blue/40 hover:text-neon-blue hover:bg-white/10 transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-sm backdrop-blur-[1.5px];
+  @apply px-6 py-3 rounded-xl font-mono text-[11px] uppercase tracking-widest transition-all duration-300 font-bold flex items-center justify-center gap-2 shadow-sm;
 }
 
-.glow-text {
-  text-shadow: 0 2px 10px rgba(8, 145, 178, 0.1);
+.cyber-button-outline:hover {
+  border-color: var(--accent-cyan);
+  color: var(--accent-cyan);
+  transform: translateY(-1px);
 }
 
 .hacker-heading {
-  @apply font-mono uppercase tracking-[0.15em] font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-slate-200 via-slate-400 to-neon-cyan;
+  @apply tracking-[0.04em] font-black text-transparent bg-clip-text;
+  background-image: linear-gradient(135deg, #0F172A 0%, #334155 40%, #0284C7 100%);
 }
 
-/* Custom light scrollbar */
+.dark .hacker-heading {
+  background-image: linear-gradient(135deg, #FFFFFF 0%, #E2E8F0 40%, #22D3EE 100%);
+}
+
+/* Custom scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 7px;
 }
 
 ::-webkit-scrollbar-track {
-  @apply bg-slate-50;
+  background-color: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  @apply bg-slate-200 rounded-full hover:bg-neon-cyan/50 transition-colors border-2 border-solid border-slate-50;
+  background-color: #CBD5E1;
+  border-radius: 9999px;
+  transition: background-color 0.2s ease;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background-color: #334155;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background-color: var(--accent-cyan);
+}
+
+/* Radar chart theme classes */
 .radar-grid {
-  @apply stroke-slate-200 stroke-[0.5px];
+  stroke: #E2E8F0;
+  stroke-width: 0.75px;
+}
+
+.dark .radar-grid {
+  stroke: #334155;
+  stroke-width: 0.75px;
 }
 
 .radar-axis {
-  @apply stroke-slate-300 stroke-[1px];
+  stroke: #CBD5E1;
+  stroke-width: 1px;
+}
+
+.dark .radar-axis {
+  stroke: #475569;
+  stroke-width: 1px;
 }
 
 .radar-area {
-  @apply fill-neon-cyan/15 stroke-neon-cyan stroke-[2px];
+  fill: rgba(2, 132, 199, 0.2);
+  stroke: #0284C7;
+  stroke-width: 2px;
 }
 
-/* Active NavLink styles */
-.active-nav {
-  @apply text-neon-cyan bg-neon-cyan/5 border-b-2 border-neon-cyan font-bold shadow-[0_2px_10px_rgba(8,145,178,0.05)];
+.dark .radar-area {
+  fill: rgba(34, 211, 238, 0.25);
+  stroke: #22D3EE;
+  stroke-width: 2px;
 }

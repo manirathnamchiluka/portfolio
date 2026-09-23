@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { motion } from 'motion/react';
-import { ExternalLink, Award, Star } from 'lucide-react';
+import { ExternalLink, Award, Star, Check, Copy, ShieldCheck } from 'lucide-react';
 
-const Certifications = () => {
-type Certification = {
+interface Certification {
   title: string;
   issuer: string;
   date: string;
@@ -12,9 +11,11 @@ type Certification = {
   featured?: boolean;
   logo: string;
   verifyUrl: string;
-  customBadge?: string;
-  badgeSubtext?: string;
-};
+  skillsAcquired: string[];
+}
+
+const Certifications: React.FC = () => {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   const certifications: Certification[] = [
     {
@@ -22,20 +23,22 @@ type Certification = {
       issuer: "Hackers Daddy / VULN",
       date: "Jun 2026",
       id: "VULN-2026-00007",
-      status: "NEW",
+      status: "FEATURED",
       featured: true,
       logo: "/certificates/hddy-logo.png",
       verifyUrl: "/certificates/JWPT-Certificate-Manirathnam-Chiluka.png",
+      skillsAcquired: ["SQL Injection", "XSS & CSRF", "Session Hijacking", "Manual Web Pentesting"]
     },
     {
-      title: "APISEC Certified Practitioner",
+      title: "APISEC Certified Practitioner (ACP)",
       issuer: "APISEC University",
       date: "Apr 2026",
       logo: "/certificates/ACP-BADGE.png",
       id: "2a07990e-879c-4787-8fa2-32f0ff049759",
-      status: "NEW",
+      status: "FEATURED",
       featured: true,
       verifyUrl: "/certificates/ACPExam-cert.pdf",
+      skillsAcquired: ["API Security Architecture", "BOLA / IDOR Testing", "REST & GraphQL Security", "Token Verification"]
     },
     {
       title: "Advent of Cyber 2025",
@@ -44,104 +47,140 @@ type Certification = {
       logo: "https://tryhackme.com/img/favicon.png",
       id: "THM-OQXK6YS6AA",
       verifyUrl: "/certificates/THM-OQXK6YS6AA-cert.pdf",
+      skillsAcquired: ["Offensive CTF Methodology", "Log Analysis", "Memory Forensics", "Network Recon"]
     },
     {
-      title: "ML for Cybersecurity",
-      issuer: "Certificate",
+      title: "Machine Learning for Cybersecurity",
+      issuer: "CDAC / Certificate Authority",
       date: "Feb 2025",
       logo: "/certificates/cdac-badge.png",
       id: "ML-2025",
       verifyUrl: "/certificates/ML%20for%20Cybersecurity-cert.pdf",
+      skillsAcquired: ["Anomaly Detection", "Malware Classification", "Feature Extraction", "Threat Prediction"]
+    },
+    {
+      title: "Certified Online Fraud Prevention Specialist (COFPS)",
+      issuer: "Hack & Fix Academy",
+      date: "Sep 2026",
+      logo: "/certificates/COFPS-logo.webp",
+      id: "1718-2219-8667-2356",
+      verifyUrl: "/certificates/COFPS.pdf",
+      skillsAcquired: ["Fraud Pattern Recognition", "Phishing & Social Engineering", "Scam Prevention", "Fraud Response Fundamentals"]
     },
   ];
 
+  const handleCopy = (id: string) => {
+    navigator.clipboard.writeText(id);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   return (
-    <div className="pt-24 space-y-12 pb-20">
-      <div className="border-b border-slate-200/50 pb-8 flex justify-between items-end">
-        <div className="space-y-4">
-          <h1 className="text-5xl font-black hacker-heading">Credential_Log</h1>
-          <p className="text-slate-600 font-mono text-[11px] uppercase tracking-[0.4em]">Validated Achievements & Professional Recognition</p>
+    <div className="pt-28 space-y-12 pb-16">
+      {/* Header */}
+      <div className="border-b border-[var(--card-border)] pb-8 flex flex-col sm:flex-row justify-between items-start sm:items-end gap-6">
+        <div className="space-y-3">
+          <div className="flex items-center gap-2 text-xs font-mono font-bold text-sky-600 dark:text-cyan-400 uppercase tracking-widest">
+            <ShieldCheck className="w-4 h-4" /> Professional Attestations
+          </div>
+          <h1 className="text-4xl sm:text-5xl font-black hacker-heading">Credential_Log</h1>
+          <p className="text-[var(--text-muted)] font-mono text-xs uppercase tracking-[0.3em]">
+            Verified Industry Credentials, Specialized Accreditations &amp; Badges
+          </p>
         </div>
-        <div className="text-neon-cyan font-mono text-xs font-bold bg-neon-cyan/10 px-4 py-2 border border-neon-cyan/25 rounded-xl shadow-sm">
-          TOTAL_NODES: {certifications.length}
+        <div className="px-4 py-2 rounded-xl bg-sky-500/10 dark:bg-cyan-400/10 border border-sky-500/20 dark:border-cyan-400/25 font-mono text-xs font-bold text-sky-700 dark:text-cyan-300">
+          TOTAL_CERTIFIED: {certifications.length}
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      {/* Grid of Credentials */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
         {certifications.map((c, idx) => (
-          <motion.div 
-            key={idx}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: idx * 0.05 }}
-            className={`cyber-card p-8 group flex flex-col justify-between space-y-8 relative overflow-hidden ${
-              c.featured 
-                ? "border-neon-cyan bg-neon-cyan/[0.03] shadow-[0_0_25px_rgba(8,145,178,0.2)] ring-1 ring-neon-cyan/45" 
-                : ""
+          <motion.div
+            key={c.id}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: idx * 0.08 }}
+            className={`cyber-card p-8 group flex flex-col justify-between space-y-6 relative overflow-hidden border ${
+              c.featured
+                ? 'border-sky-500/40 dark:border-cyan-400/50 shadow-md ring-1 ring-sky-500/20 dark:ring-cyan-400/20'
+                : 'border-[var(--card-border)]'
             }`}
           >
-             {c.featured && (
-               <div className="absolute top-0 right-0 bg-neon-cyan text-slate-950 font-mono text-[9px] font-black uppercase px-4 py-1.5 rounded-bl-xl flex items-center gap-1.5 shadow-sm">
-                 <Star className="w-3.5 h-3.5 fill-slate-950 text-slate-950" /> Featured Credential
-               </div>
-             )}
+            {c.featured && (
+              <div className="absolute top-0 right-0 bg-sky-600 dark:bg-cyan-400 text-white dark:text-slate-950 font-mono text-[9px] font-black uppercase px-4 py-1.5 rounded-bl-xl flex items-center gap-1.5 shadow-sm">
+                <Star className="w-3 h-3 fill-current" /> Featured Credential
+              </div>
+            )}
 
-             <div className="space-y-6">
-                <div className="flex justify-between items-start">
-                   {c.customBadge ? (
-                     <div className="h-20 w-20 shrink-0 flex flex-col items-center justify-center bg-slate-950 border-2 border-neon-cyan/85 rounded-2xl shadow-[0_0_15px_rgba(8,145,178,0.35)] relative group-hover:scale-105 transition-transform overflow-hidden font-mono">
-                       <span className="text-[14px] font-black text-neon-cyan tracking-tighter leading-none">{c.customBadge}</span>
-                       <span className="text-[7px] font-black text-slate-400 mt-1 uppercase scale-90 tracking-widest leading-none">{c.badgeSubtext || 'VULN'}</span>
-                     </div>
-                   ) : (
-                     <div className="p-4 bg-white/5 backdrop-blur-[1.5px] border border-white/15 rounded-2xl group-hover:bg-neon-cyan/15 transition-all h-20 w-20 flex items-center justify-center shadow-sm">
-                        <img src={c.logo} className="w-full h-full object-contain grayscale group-hover:grayscale-0 transition-all opacity-85 group-hover:opacity-100" referrerPolicy="no-referrer" />
-                     </div>
-                   )}
-                  
-                  {c.status && (
-                    <span className={`text-[9px] font-mono font-black px-3 py-1 rounded-full border ${
-                      c.status === 'NEW' 
-                        ? 'bg-neon-cyan/15 text-neon-cyan border-neon-cyan/35' 
-                        : 'bg-white/5 text-slate-600 border-white/15 backdrop-blur-[1.5px]'
-                    }`}>
-                      {c.status}
-                    </span>
-                  )}
+            <div className="space-y-6">
+              {/* Logo & Issuer */}
+              <div className="flex items-start justify-between gap-4">
+                <div className="p-3.5 bg-white dark:bg-slate-900 rounded-2xl border border-[var(--card-border)] w-20 h-20 flex items-center justify-center shadow-sm">
+                  <img
+                    src={c.logo}
+                    alt={c.issuer}
+                    className="w-full h-full object-contain filter group-hover:scale-105 transition-transform"
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
-                
-                <div className="space-y-2">
-                  <h4 className="font-extrabold text-lg text-slate-900 group-hover:text-neon-cyan transition-colors leading-tight min-h-[50px]">
-                    {c.title}
-                  </h4>
-                  <div className="flex items-center gap-2 text-[10px] font-mono font-bold text-slate-500">
-                    <Award className="w-4 h-4 text-neon-cyan opacity-85" /> {c.issuer}
-                  </div>
+                <div className="text-right">
+                  <span className="text-[10px] font-mono font-bold text-[var(--text-muted)] uppercase tracking-wider block">
+                    {c.date}
+                  </span>
+                  <span className="inline-block mt-1 text-[9px] font-mono font-bold px-2.5 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[var(--text-muted)] border border-[var(--card-border)]">
+                    VERIFIED
+                  </span>
                 </div>
-             </div>
+              </div>
 
-             <div className="space-y-4 pt-6 border-t border-slate-150">
-                <div className="flex justify-between items-center text-[10px] font-mono">
-                  <span className="text-slate-400 italic font-bold tracking-widest uppercase">{c.date}</span>
+              {/* Title & Issuer Info */}
+              <div className="space-y-1.5">
+                <h2 className="font-extrabold text-xl text-[var(--heading-main)] group-hover:text-sky-600 dark:group-hover:text-cyan-400 transition-colors leading-snug">
+                  {c.title}
+                </h2>
+                <div className="flex items-center gap-2 text-xs font-mono font-semibold text-sky-600 dark:text-cyan-400">
+                  <Award className="w-4 h-4" /> {c.issuer}
                 </div>
-                {c.id && (
-                  <p className="text-[9px] font-mono text-neon-cyan bg-neon-cyan/10 p-2 rounded-lg truncate border border-neon-cyan/25 font-bold">
-                    ID: {c.id}
-                  </p>
-                )}
-                <a 
-                  href={c.verifyUrl} 
-                  target="_blank" 
-                  rel="noopener noreferrer" 
-                  className={`w-full text-[11px] font-black tracking-widest uppercase flex items-center justify-center gap-1.5 ${
-                    c.featured
-                      ? 'cyber-button-primary'
-                      : 'cyber-button-outline'
-                  }`}
+              </div>
+
+              {/* Acquired Skills */}
+              <div className="flex flex-wrap gap-1.5 pt-1">
+                {c.skillsAcquired.map((skill) => (
+                  <span
+                    key={skill}
+                    className="text-[10px] font-mono font-medium px-2.5 py-1 rounded-md bg-[var(--badge-bg)] text-[var(--badge-text)] border border-[var(--badge-border)]"
+                  >
+                    {skill}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Bottom Actions: Copy ID & View Link */}
+            <div className="space-y-3 pt-5 border-t border-[var(--card-border)]">
+              <div className="flex items-center justify-between text-[11px] font-mono bg-slate-50 dark:bg-slate-900/80 p-2.5 rounded-xl border border-[var(--card-border)]">
+                <span className="text-[var(--text-muted)] truncate pr-2 font-semibold">
+                  ID: <span className="text-[var(--heading-main)]">{c.id}</span>
+                </span>
+                <button
+                  onClick={() => handleCopy(c.id)}
+                  className="p-1.5 rounded-lg hover:bg-slate-200 dark:hover:bg-slate-800 text-sky-600 dark:text-cyan-400 transition-colors shrink-0"
+                  title="Copy Certificate ID"
                 >
-                  Verify Access <ExternalLink className="w-3.5 h-3.5" />
-                </a>
-             </div>
+                  {copiedId === c.id ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                </button>
+              </div>
+
+              <a
+                href={c.verifyUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`w-full ${c.featured ? 'cyber-button-primary' : 'cyber-button-outline'} font-bold text-xs`}
+              >
+                Inspect Official Credential <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
           </motion.div>
         ))}
       </div>

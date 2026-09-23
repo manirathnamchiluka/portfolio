@@ -1,32 +1,21 @@
 import React, { useEffect, useRef } from 'react';
+import { useTheme } from '../context/ThemeContext';
 
-interface Particle {
+interface Star {
   x: number;
   y: number;
+  originX: number;
+  originY: number;
   vx: number;
   vy: number;
   size: number;
   baseAlpha: number;
-  z: number; // For parallax depth
+  colorType: 'cyan' | 'blue' | 'neutral';
+  pulseSpeed: number;
+  pulseOffset: number;
 }
 
-interface DataStream {
-  x: number;
-  y: number;
-  speed: number;
-  length: number;
-  opacity: number;
-}
-
-interface CursorTracker {
-  x: number;
-  y: number;
-  targetX: number;
-  targetY: number;
-  active: boolean;
-}
-
-interface DigitalRipple {
+interface ClickRipple {
   x: number;
   y: number;
   radius: number;
@@ -35,18 +24,20 @@ interface DigitalRipple {
 }
 
 const InteractiveBackground: React.FC = () => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const scrollYRef = useRef<number>(0);
-  const targetScrollYRef = useRef<number>(0);
-  const mouseRef = useRef<CursorTracker>({ x: 0, y: 0, targetX: 0, targetY: 0, active: false });
-  const ripplesRef = useRef<DigitalRipple[]>([]);
-  const particlesRef = useRef<Particle[]>([]);
-  const streamsRef = useRef<DataStream[]>([]);
+  const { theme } = useTheme();
+  const themeRef = useRef(theme);
+  themeRef.current = theme;
 
-  const PARTICLE_COUNT = 110;
-  const STREAM_COUNT = 8;
-  const CONNECTION_DISTANCE = 160;
-  const GRID_SIZE = 60;
+  const canvasRef = useRef<HTMLCanvasElement | null>(null);
+  const mouseRef = useRef({
+    x: -2000,
+    y: -2000,
+    radius: 175, // Enhanced repulsion radius
+    active: false,
+  });
+
+  const starsRef = useRef<Star[]>([]);
+  const ripplesRef = useRef<ClickRipple[]>([]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -57,209 +48,229 @@ const InteractiveBackground: React.FC = () => {
 
     let animationFrameId: number;
 
-    // Capture user interactive triggers
     const handleMouseMove = (e: MouseEvent) => {
-      mouseRef.current.targetX = e.clientX;
-      mouseRef.current.targetY = e.clientY;
+      mouseRef.current.x = e.clientX;
+      mouseRef.current.y = e.clientY;
       mouseRef.current.active = true;
     };
 
     const handleMouseLeave = () => {
+      mouseRef.current.x = -2000;
+      mouseRef.current.y = -2000;
       mouseRef.current.active = false;
     };
 
     const handleTouchMove = (e: TouchEvent) => {
       if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        mouseRef.current.targetX = touch.clientX;
-        mouseRef.current.targetY = touch.clientY;
+        mouseRef.current.x = e.touches[0].clientX;
+        mouseRef.current.y = e.touches[0].clientY;
         mouseRef.current.active = true;
       }
     };
 
-    const handleTouchStart = (e: TouchEvent) => {
-      if (e.touches.length > 0) {
-        const touch = e.touches[0];
-        createRipple(touch.clientX, touch.clientY);
-      }
+    const handleTouchEnd = () => {
+      mouseRef.current.x = -2000;
+      mouseRef.current.y = -2000;
+      mouseRef.current.active = false;
     };
 
-    const handleMouseDown = (e: MouseEvent) => {
-      createRipple(e.clientX, e.clientY);
-    };
-
-    const handleScroll = () => {
-      targetScrollYRef.current = window.scrollY;
+    const handleClick = (e: MouseEvent) => {
+      ripplesRef.current.push({
+        x: e.clientX,
+        y: e.clientY,
+        radius: 10,
+        maxRadius: 220,
+        alpha: 0.6,
+      });
+      if (ripplesRef.current.length > 5) ripplesRef.current.shift();
     };
 
     const resizeCanvas = () => {
       canvas.width = window.innerWidth;
       canvas.height = window.innerHeight;
-      initSystem();
+      initStars();
     };
 
-    const initSystem = () => {
-      particlesRef.current = Array.from({ length: PARTICLE_COUNT }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        vx: (Math.random() - 0.5) * 0.5,
-        vy: (Math.random() - 0.5) * 0.5,
-        size: Math.random() * 2.5 + 0.5,
-        baseAlpha: Math.random() * 0.5 + 0.1,
-        z: Math.random() * 1.0, // Expanded Depth factor
-      }));
+    const initStars = () => {
+      const stars: Star[] = [];
+      // Richer dust density: ~260 particles on desktop
+      const starDensity = Math.min(280, Math.max(140, Math.floor((canvas.width * canvas.height) / 5000)));
 
-      streamsRef.current = Array.from({ length: STREAM_COUNT }, () => ({
-        x: Math.random() * canvas.width,
-        y: Math.random() * canvas.height,
-        speed: Math.random() * 8 + 4,
-        length: Math.random() * 150 + 80,
-        opacity: Math.random() * 0.2 + 0.05,
-      }));
-    };
-
-    const createRipple = (x: number, y: number) => {
-      ripplesRef.current.push({
-        x, y,
-        radius: 0,
-        maxRadius: 200,
-        alpha: 0.5
-      });
-      if (ripplesRef.current.length > 5) ripplesRef.current.shift();
+      for (let i = 0; i < starDensity; i++) {
+        const x = Math.random() * canvas.width;
+        const y = Math.random() * canvas.height;
+        const typeRoll = Math.random();
+        
+        stars.push({
+          x,
+          y,
+          originX: x,
+          originY: y,
+          vx: (Math.random() - 0.5) * 0.35, // Smooth organic drift
+          vy: (Math.random() - 0.5) * 0.35,
+          size: Math.random() * 2.6 + 0.7,
+          baseAlpha: Math.random() * 0.5 + 0.3,
+          colorType: typeRoll < 0.5 ? 'cyan' : typeRoll < 0.8 ? 'blue' : 'neutral',
+          pulseSpeed: Math.random() * 1.8 + 0.8,
+          pulseOffset: Math.random() * Math.PI * 2,
+        });
+      }
+      starsRef.current = stars;
     };
 
     window.addEventListener('resize', resizeCanvas);
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseleave', handleMouseLeave);
     window.addEventListener('touchmove', handleTouchMove, { passive: true });
-    window.addEventListener('touchstart', handleTouchStart, { passive: true });
-    window.addEventListener('mousedown', handleMouseDown);
-    window.addEventListener('scroll', handleScroll, { passive: true });
+    window.addEventListener('touchend', handleTouchEnd);
+    window.addEventListener('mousedown', handleClick);
 
     resizeCanvas();
-    
-    // Render loop
+
     const render = () => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
+      const isDark = themeRef.current === 'dark';
       const time = Date.now() * 0.001;
-      
       const mouse = mouseRef.current;
-      mouse.x += (mouse.targetX - mouse.x) * 0.05;
-      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+      const stars = starsRef.current;
 
-      // Render Subtle Blueprint Grid
-      ctx.strokeStyle = 'rgba(8, 145, 178, 0.02)';
-      ctx.lineWidth = 1;
-      const gridOffset = (targetScrollYRef.current * 0.05) % GRID_SIZE;
-      
-      for (let x = 0; x < canvas.width; x += GRID_SIZE) {
-        ctx.beginPath();
-        ctx.moveTo(x, 0);
-        ctx.lineTo(x, canvas.height);
-        ctx.stroke();
-      }
-      for (let y = -gridOffset; y < canvas.height; y += GRID_SIZE) {
-        ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(canvas.width, y);
-        ctx.stroke();
-      }
+      // 1. Render Interactive Click Energy Ripples
+      const ripples = ripplesRef.current;
+      for (let i = ripples.length - 1; i >= 0; i--) {
+        const r = ripples[i];
+        r.radius += 5.5;
+        r.alpha *= 0.95;
 
-      // Update Ripples
-      for (let i = ripplesRef.current.length - 1; i >= 0; i--) {
-        const rip = ripplesRef.current[i];
-        rip.radius += 4;
-        rip.alpha *= 0.95;
         ctx.beginPath();
-        ctx.arc(rip.x, rip.y, rip.radius, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(8, 145, 178, ${rip.alpha})`;
-        ctx.lineWidth = 2;
+        ctx.arc(r.x, r.y, r.radius, 0, Math.PI * 2);
+        ctx.strokeStyle = isDark
+          ? `rgba(34, 211, 238, ${r.alpha * 0.75})`
+          : `rgba(2, 132, 199, ${r.alpha * 0.6})`;
+        ctx.lineWidth = 1.5;
         ctx.stroke();
-        if (rip.alpha < 0.01) ripplesRef.current.splice(i, 1);
+
+        if (r.alpha < 0.01 || r.radius > r.maxRadius) {
+          ripples.splice(i, 1);
+        }
       }
 
-      // Update Particles
-      const particles = particlesRef.current;
-      for (let i = 0; i < particles.length; i++) {
-        const p = particles[i];
-        
-        // Movement with Velocity
-        p.x += p.vx * (0.5 + p.z);
-        p.y += p.vy * (0.5 + p.z);
-
-        // Apply Parallax based on Mouse and Depth (z)
-        const parallaxX = (mouse.x - canvas.width / 2) * p.z * 0.08;
-        const parallaxY = (mouse.y - canvas.height / 2) * p.z * 0.08;
-        
-        const drawX = p.x + parallaxX;
-        const drawY = p.y + parallaxY;
-
-        if (p.x < 0) p.x = canvas.width;
-        if (p.x > canvas.width) p.x = 0;
-        if (p.y < 0) p.y = canvas.height;
-        if (p.y > canvas.height) p.y = 0;
-
-        // Calculate distance from mouse once per particle for performance
-        const mouseDist = Math.hypot(mouse.x - drawX, mouse.y - drawY);
-        const isNearMouse = mouseDist < 160;
-
-        // Pulse particle opacity
-        const pulse = Math.sin(time * 2 + i) * 0.1;
-        
-        ctx.beginPath();
-        ctx.arc(drawX, drawY, p.size, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(8, 145, 178, ${p.baseAlpha + pulse + (isNearMouse ? 0.3 : 0)})`;
-        ctx.fill();
-
-        for (let j = i + 1; j < particles.length; j++) {
-          const p2 = particles[j];
-          const p2ParallaxX = (mouse.x - canvas.width / 2) * p2.z * 0.08;
-          const p2ParallaxY = (mouse.y - canvas.height / 2) * p2.z * 0.08;
-          
-          const dx = drawX - (p2.x + p2ParallaxX);
-          const dy = drawY - (p2.y + p2ParallaxY);
+      // 2. Dynamic Constellation Mesh Lines
+      const CONNECT_DIST = 105;
+      for (let i = 0; i < stars.length; i++) {
+        for (let j = i + 1; j < stars.length; j++) {
+          const s1 = stars[i];
+          const s2 = stars[j];
+          const dx = s1.x - s2.x;
+          const dy = s1.y - s2.y;
           const dist = Math.sqrt(dx * dx + dy * dy);
 
-          if (dist < CONNECTION_DISTANCE) {
+          if (dist < CONNECT_DIST) {
+            const lineAlpha = (1 - dist / CONNECT_DIST) * (isDark ? 0.16 : 0.11);
             ctx.beginPath();
-            ctx.moveTo(drawX, drawY);
-            ctx.lineTo(p2.x + p2ParallaxX, p2.y + p2ParallaxY);
-            
-            // Create "Flowing" data animation using line dashes
-            ctx.setLineDash([4, 12]);
-            ctx.lineDashOffset = -time * 30;
-            
-            const opacity = (1 - dist / CONNECTION_DISTANCE) * (isNearMouse ? 0.3 : 0.12);
-            ctx.strokeStyle = `rgba(37, 99, 235, ${opacity})`;
-            ctx.lineWidth = isNearMouse ? 1 : 0.6;
+            ctx.moveTo(s1.x, s1.y);
+            ctx.lineTo(s2.x, s2.y);
+            ctx.strokeStyle = isDark
+              ? `rgba(34, 211, 238, ${lineAlpha})`
+              : `rgba(2, 132, 199, ${lineAlpha})`;
+            ctx.lineWidth = 0.65;
             ctx.stroke();
-            ctx.setLineDash([]); // Reset after each connection
           }
         }
       }
 
-      // Render Cursor Highlight (after particles so it's on top)
-      if (mouse.active) {
-        ctx.fillStyle = `rgba(14, 165, 233, 0.4)`; // Intense cyan glow
-        ctx.fillRect(mouse.x - 3, mouse.y - 3, 6, 6); // Small square highlight
-      }
+      // 3. Update & Draw Dust Particles
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
 
-      // Update Data Streams
-      const streams = streamsRef.current;
-      for (const s of streams) {
-        s.x -= s.speed;
-        if (s.x + s.length < 0) {
-          s.x = canvas.width + 50;
-          s.y = Math.random() * canvas.height;
+        // Organic slow ambient float
+        star.originX += star.vx;
+        star.originY += star.vy;
+
+        // Wrap viewport edges
+        if (star.originX < 0) star.originX = canvas.width;
+        if (star.originX > canvas.width) star.originX = 0;
+        if (star.originY < 0) star.originY = canvas.height;
+        if (star.originY > canvas.height) star.originY = 0;
+
+        // Mouse Repulsion & Ripple Displacement
+        const dx = star.x - mouse.x;
+        const dy = star.y - mouse.y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        let pushX = 0;
+        let pushY = 0;
+
+        // Cursor Repulsion
+        if (dist < mouse.radius && mouse.active) {
+          const force = (1 - dist / mouse.radius) * 8.5;
+          const angle = Math.atan2(dy, dx);
+          pushX += Math.cos(angle) * force;
+          pushY += Math.sin(angle) * force;
         }
+
+        // Ripple Displacement
+        for (let j = 0; j < ripples.length; j++) {
+          const rip = ripples[j];
+          const rdx = star.x - rip.x;
+          const rdy = star.y - rip.y;
+          const rdist = Math.sqrt(rdx * rdx + rdy * rdy);
+          const rippleRingDist = Math.abs(rdist - rip.radius);
+
+          if (rippleRingDist < 30) {
+            const waveForce = (1 - rippleRingDist / 30) * rip.alpha * 6;
+            const waveAngle = Math.atan2(rdy, rdx);
+            pushX += Math.cos(waveAngle) * waveForce;
+            pushY += Math.sin(waveAngle) * waveForce;
+          }
+        }
+
+        if (pushX !== 0 || pushY !== 0) {
+          star.x += pushX;
+          star.y += pushY;
+        } else {
+          // Smooth return spring
+          star.x += (star.originX - star.x) * 0.055;
+          star.y += (star.originY - star.y) * 0.055;
+        }
+
+        // Periodic Shimmer & Twinkle
+        const pulse = Math.sin(time * star.pulseSpeed + star.pulseOffset) * 0.22;
+        const alpha = Math.max(0.1, Math.min(1, star.baseAlpha + pulse));
+
+        // Theme-Adaptive Colors
+        let fillColor: string;
+        if (isDark) {
+          if (star.colorType === 'cyan') {
+            fillColor = `rgba(34, 211, 238, ${alpha})`;
+          } else if (star.colorType === 'blue') {
+            fillColor = `rgba(129, 140, 248, ${alpha * 0.95})`;
+          } else {
+            fillColor = `rgba(248, 250, 252, ${alpha * 0.85})`;
+          }
+        } else {
+          if (star.colorType === 'cyan') {
+            fillColor = `rgba(2, 132, 199, ${alpha * 0.85})`;
+          } else if (star.colorType === 'blue') {
+            fillColor = `rgba(79, 70, 229, ${alpha * 0.75})`;
+          } else {
+            fillColor = `rgba(51, 65, 85, ${alpha * 0.6})`;
+          }
+        }
+
         ctx.beginPath();
-        const grad = ctx.createLinearGradient(s.x, s.y, s.x + s.length, s.y);
-        grad.addColorStop(0, 'transparent');
-        grad.addColorStop(1, `rgba(14, 165, 233, ${s.opacity})`);
-        ctx.strokeStyle = grad;
-        ctx.moveTo(s.x, s.y);
-        ctx.lineTo(s.x + s.length, s.y);
-        ctx.stroke();
+        ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+        ctx.fillStyle = fillColor;
+        ctx.fill();
+
+        // Delicate luminous halo on larger particles
+        if (star.size > 2) {
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.size * 2, 0, Math.PI * 2);
+          ctx.fillStyle = isDark
+            ? `rgba(34, 211, 238, ${alpha * 0.18})`
+            : `rgba(2, 132, 199, ${alpha * 0.12})`;
+          ctx.fill();
+        }
       }
 
       animationFrameId = requestAnimationFrame(render);
@@ -272,9 +283,8 @@ const InteractiveBackground: React.FC = () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseleave', handleMouseLeave);
       window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchstart', handleTouchStart);
-      window.removeEventListener('mousedown', handleMouseDown);
-      window.removeEventListener('scroll', handleScroll);
+      window.removeEventListener('touchend', handleTouchEnd);
+      window.removeEventListener('mousedown', handleClick);
       cancelAnimationFrame(animationFrameId);
     };
   }, []);
@@ -282,7 +292,7 @@ const InteractiveBackground: React.FC = () => {
   return (
     <canvas
       ref={canvasRef}
-      className="fixed inset-0 pointer-events-none z-0"
+      className="fixed inset-0 pointer-events-none z-0 transition-opacity duration-300"
     />
   );
 };
